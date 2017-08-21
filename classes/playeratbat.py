@@ -31,6 +31,9 @@ class PlayerAtBat:
         self.result = ""
 
     def __str__(self):
-        return self.player + " - " + self.pitcher + " - Balls: " + str(self.balls) + \
+        return self.player + " - " + self.pitcher + " Inning : " + self.inning + \
+                " - Balls: " + str(self.balls) + \
                 " Called Strikes: " + str(self.called_strikes) + " Swinging Stikes: " + str(self.swinging_strikes) + \
-                " First Pitch Strike: " + str(self.first_pitch_strike) + " Result: " + self.result
+                " First Pitch Strike: " + str(self.first_pitch_strike) + " Foul Balls: " + str(self.foul_balls) + \
+                " Ball In Play : " + str(self.ball_in_play) + "Home Run : " + str(self.home_run) + \
+                " Result: " + self.result
