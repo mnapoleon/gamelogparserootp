@@ -18,10 +18,11 @@ class PlayerAtBat:
 
     def __init__(self):
         self.player = ""
-        self.team = ""
+        self.player_team = ""
         self.inning = 0
         self.game_date = ""
         self.pitcher = ""
+        self.pitcher_team = ""
         self.balls = 0
         self.swinging_strikes = 0
         self.called_strikes = 0

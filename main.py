@@ -35,9 +35,11 @@ def process_inning(inning, pitcher, inning_num, awayteam, hometeam, game_date):
             atbat.player = batter
             atbat.game_date = game_date
             if top:
-                atbat.team = awayteam
+                atbat.player_team = awayteam
+                atbat.pitcher_team = hometeam
             elif not top:
-                atbat.team = hometeam
+                atbat.player_team = hometeam
+                atbat.pitcher_team = awayteam
             for pitch in at_bat_data:
                 if re.match(r'^([0-3]-[0-2]:)', pitch):
                     pitch_data = re.split(":", pitch)
@@ -180,11 +182,11 @@ for root, dirs, files in os.walk('logs', topdown=False):
 
 output_file = open('logresults.csv', 'w')
 
-output_file.write("Batter,Pitcher,Team,GameDate,Inning,Balls,Called Strikes,Swinging Strikes,Foul Balls,First Pitch Strike,In Play,HR,Result\n")
+output_file.write("Batter,Batter Team,Pitcher,Pitcher Team,GameDate,Inning,Balls,Called Strikes,Swinging Strikes,Foul Balls,First Pitch Strike,In Play,HR,Result\n")
 for plateappearances in results:
     for pa in plateappearances:
 
-        output_file.write(pa.player+","+pa.pitcher+","+pa.team+","+pa.game_date+","+pa.inning+","+str(pa.balls)+","+str(pa.called_strikes)+","
+        output_file.write(pa.player+","+pa.player_team+","+pa.pitcher+","+pa.pitcher_team+","+pa.game_date+","+pa.inning+","+str(pa.balls)+","+str(pa.called_strikes)+","
                +str(pa.swinging_strikes)+","+str(pa.foul_balls)+","
                +str(pa.first_pitch_strike)+","+str(pa.ball_in_play)+","+str(pa.home_run)+","+pa.result+"\n")
 output_file.close()
