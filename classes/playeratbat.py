@@ -20,6 +20,7 @@ class PlayerAtBat:
         self.player = ""
         self.team = ""
         self.inning = 0
+        self.game_date = ""
         self.pitcher = ""
         self.balls = 0
         self.swinging_strikes = 0
