@@ -12,6 +12,7 @@ class AtBatOutcome:
     FB = 'foul ball'
     BFB = 'bunted foul'
     FO = 'fly out'
+    PO = 'popout'
     GO = 'ground out'
     GOS = 'grounds out'
     FC = 'fielders choice'

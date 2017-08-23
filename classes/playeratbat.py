@@ -27,9 +27,11 @@ class PlayerAtBat:
         self.swinging_strikes = 0
         self.called_strikes = 0
         self.foul_balls = 0
-        self.ball_in_play = False
-        self.home_run = False
-        self.first_pitch_strike = False
+        self.ball_in_play = 0
+        self.home_run = 0
+        self.first_pitch_strike = 0
+        self.called_strike_out = 0
+        self.swinging_strike_out = 0
         self.result = ""
 
     def __str__(self):

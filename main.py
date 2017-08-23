@@ -25,6 +25,7 @@ def process_inning(inning, pitcher, inning_num, awayteam, hometeam, game_date):
             pitcher = td_tag.find("a").text
         elif text_data.startswith('Batting'):
             batter = td_tag.find("a").text
+            batter_id = td_tag.find
         elif text_data == '':
             i = 1
         else:
@@ -58,85 +59,90 @@ def process_inning(inning, pitcher, inning_num, awayteam, hometeam, game_date):
                     elif pitch_outcome == AtBatOutcome.CS:
                         atbat.called_strikes = atbat.called_strikes + 1
                         if pitch_count == '0-0':
-                            atbat.first_pitch_strike = True
+                            atbat.first_pitch_strike = 1
                     elif pitch_outcome.startswith(AtBatOutcome.CSO):
                         atbat.called_strikes = atbat.called_strikes + 1
+                        atbat.called_strike_out = 1
                         atbat.result = 'SO'
                     elif pitch_outcome == AtBatOutcome.SWS:
                         atbat.swinging_strikes = atbat.swinging_strikes + 1
                         if pitch_count == '0-0':
-                            atbat.first_pitch_strike = True
+                            atbat.first_pitch_strike = 1
                     elif pitch_outcome == AtBatOutcome.BUNTMISSED:
                         atbat.swinging_strikes = atbat.swinging_strikes + 1
                         if pitch_count == '0-0':
-                            atbat.first_pitch_strike = True
+                            atbat.first_pitch_strike = 1
                     elif pitch_outcome.startswith(AtBatOutcome.SWSO):
                         atbat.swinging_strikes = atbat.swinging_strikes + 1
+                        atbat.swinging_strike_out = 1
                         atbat.result = 'SO'
                     elif pitch_outcome.startswith(AtBatOutcome.FB):
                         atbat.foul_balls = atbat.foul_balls + 1
                         if pitch_count == '0-0':
-                            atbat.first_pitch_strike = True
+                            atbat.first_pitch_strike = 1
                     elif pitch_outcome.startswith(AtBatOutcome.BFB):
                         atbat.foul_balls = atbat.foul_balls + 1
                         if pitch_count == '0-0':
-                            atbat.first_pitch_strike = True
+                            atbat.first_pitch_strike = 1
                     elif pitch_outcome.startswith(AtBatOutcome.FO):
-                        atbat.ball_in_play = True
-                        atbat.result = 'FO'
+                        atbat.ball_in_play = 1
+                        if pitch_outcome.__contains__(AtBatOutcome.PO):
+                            atbat.result = 'PO'
+                        else:
+                            atbat.result = 'FO'
                     elif pitch_outcome.startswith(AtBatOutcome.GO):
-                        atbat.ball_in_play = True
+                        atbat.ball_in_play = 1
                         atbat.result = 'GO'
                     elif pitch_outcome.startswith(AtBatOutcome.GOS):
-                        atbat.ball_in_play = True
+                        atbat.ball_in_play = 1
                         atbat.result = 'GO'
                     elif pitch_outcome.startswith(AtBatOutcome.FC):
-                        atbat.ball_in_play = True
+                        atbat.ball_in_play = 1
                         atbat.result = 'GO'
                     elif pitch_outcome.startswith(AtBatOutcome.GOFC):
-                        atbat.ball_in_play = True
+                        atbat.ball_in_play = 1
                         atbat.result = 'GO'
                     elif pitch_outcome.startswith(AtBatOutcome.GODP):
-                        atbat.ball_in_play = True
+                        atbat.ball_in_play = 1
                         atbat.result = 'GO-DP'
                     elif pitch_outcome.startswith(AtBatOutcome.ROE):
-                        atbat.ball_in_play = True
+                        atbat.ball_in_play = 1
                         atbat.result = 'ROE'
                     elif pitch_outcome.startswith(AtBatOutcome.RVE):
-                        atbat.ball_in_play = True
+                        atbat.ball_in_play = 1
                         atbat.result = 'ROE'
                     elif pitch_outcome.startswith(AtBatOutcome.RCI):
-                        atbat.ball_in_play = True
+                        atbat.ball_in_play = 1
                         atbat.result = 'RCI'
                     elif pitch_outcome.startswith(AtBatOutcome.SINGLE):
-                        atbat.ball_in_play = True
+                        atbat.ball_in_play = 1
                         atbat.result = '1B'
                     elif pitch_outcome.startswith(AtBatOutcome.DOUBLE):
-                        atbat.ball_in_play = True
+                        atbat.ball_in_play = 1
                         atbat.result = '2B'
                     elif pitch_outcome.startswith(AtBatOutcome.TRIPLE):
-                        atbat.ball_in_play = True
+                        atbat.ball_in_play = 1
                         atbat.result = '3B'
                     elif pitch_outcome.__contains__(AtBatOutcome.HR):
-                        atbat.home_run = True
+                        atbat.home_run = 1
                         atbat.result = 'HR'
                     elif pitch_outcome.startswith(AtBatOutcome.SACBUNT):
-                        atbat.ball_in_play = True
+                        atbat.ball_in_play = 1
                         if pitch_outcome.__contains__(AtBatOutcome.OUT):
                             atbat.result = 'SAC'
                         else:
                             atbat.result = '1B'
                     elif pitch_outcome.startswith(AtBatOutcome.BUNTFORHIT):
-                        atbat.ball_in_play = True
+                        atbat.ball_in_play = 1
                         if pitch_outcome.__contains__(AtBatOutcome.OUT):
                             atbat.result = 'GO'
                         elif pitch_outcome.__contains__(AtBatOutcome.SAFE):
                             atbat.result = '1B'
                     elif pitch_outcome.startswith(AtBatOutcome.BUNTFO):
-                        atbat.ball_in_play = True
+                        atbat.ball_in_play = 1
                         atbat.result = 'PO'
                     elif pitch_outcome.startswith(AtBatOutcome.LTP):
-                        atbat.ball_in_play = True
+                        atbat.ball_in_play = 1
                         atbat.result = 'TP'
                     else:
                         i=1
@@ -177,16 +183,15 @@ for root, dirs, files in os.walk('logs', topdown=False):
                 th_link_pitcher = inning.find_all("th")[1].find("a")
                 if (th_link_pitcher):
                     pitcher = th_link_pitcher.text
-                #pitcher = inning.find_all("th")[1].find("a").text
                 results.append(process_inning(inning, pitcher, inning_num, away, home, game_date))
 
 output_file = open('logresults.csv', 'w')
 
-output_file.write("Batter,Batter Team,Pitcher,Pitcher Team,GameDate,Inning,Balls,Called Strikes,Swinging Strikes,Foul Balls,First Pitch Strike,In Play,HR,Result\n")
+output_file.write("Batter,Batter Team,Pitcher,Pitcher Team,GameDate,Inning,BALLS,CS,SWS,FB,FPS,CSO,SWO,InP,HR,Result\n")
 for plateappearances in results:
     for pa in plateappearances:
 
         output_file.write(pa.player+","+pa.player_team+","+pa.pitcher+","+pa.pitcher_team+","+pa.game_date+","+pa.inning+","+str(pa.balls)+","+str(pa.called_strikes)+","
                +str(pa.swinging_strikes)+","+str(pa.foul_balls)+","
-               +str(pa.first_pitch_strike)+","+str(pa.ball_in_play)+","+str(pa.home_run)+","+pa.result+"\n")
+               +str(pa.first_pitch_strike)+","+str(pa.called_strike_out)+","+str(pa.swinging_strike_out)+","+str(pa.ball_in_play)+","+str(pa.home_run)+","+pa.result+"\n")
 output_file.close()
