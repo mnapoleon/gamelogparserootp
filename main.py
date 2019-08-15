@@ -6,7 +6,28 @@ import re
 import os
 import fileinput
 
-def process_inning(inning, pitcher, inning_num, awayteam, hometeam, game_date):
+
+def process_inplay_outcomes(inplay_outcomes, atbat):
+    outcomes = inplay_outcomes.split(',')
+    hit_type_raw = outcomes[0]
+    hit_type = hit_type_raw[1:]
+    location = outcomes[1].strip()
+    exit_velo_strings = outcomes[2].split()
+    exit_velo = exit_velo_strings[1]
+
+    atbat.exitvelo = exit_velo
+    atbat.hittype = hit_type
+    atbat.hitlocation = location
+
+
+def get_player_id_from_href(player_tag):
+    player_href = player_tag['href']
+    underscore_index = player_href.find('_')
+    dot_html_index = player_href.find('.html')
+    player_id = player_href[underscore_index+1:dot_html_index]
+    return player_id
+
+def process_inning(inning, pitcher, pitcher_id, inning_num, awayteam, hometeam, game_date):
     td_tags = inning.find_all("td", class_=lambda x: x != 'datathbg')
 
     # determine if we are in top or bottom of innning
@@ -17,23 +38,31 @@ def process_inning(inning, pitcher, inning_num, awayteam, hometeam, game_date):
         top = False
 
     batter = ""
+    batter_id = 0
     batters = []
+    inplay_outcome = ''
     for td_tag in td_tags:
         text_data = td_tag.text.strip()
         # checks to see if a pitching change occurred during the inning
         if text_data.startswith('Pitching'):
-            pitcher = td_tag.find("a").text
-        elif text_data.startswith('Batting'):
-            batter = td_tag.find("a").text
-            batter_id = td_tag.find
+            pitcher_tag = td_tag.find("a")
+            pitcher = pitcher_tag.text
+            pitcher_id = get_player_id_from_href(pitcher_tag)
+        elif text_data.startswith('Batting') or text_data.startswith('Pinch Hitting'):
+            batter_tag = td_tag.find("a")
+            batter = batter_tag.text
+            batter_id = get_player_id_from_href(batter_tag)
+            print("Batter Id: " + batter_id)
         elif text_data == '':
             i = 1
         else:
             at_bat_data = text_data.split("*")
             atbat = PlayerAtBat()
             atbat.inning = inning_num
+            atbat.pitcher_id = pitcher_id
             atbat.pitcher = pitcher
             atbat.player = batter
+            atbat.player_id = batter_id
             atbat.game_date = game_date
             if top:
                 atbat.player_team = awayteam
@@ -46,6 +75,9 @@ def process_inning(inning, pitcher, inning_num, awayteam, hometeam, game_date):
                     pitch_data = re.split(":", pitch)
                     pitch_count = pitch_data[0]
                     pitch_outcome = pitch_data[1].strip().lower()
+                    loc_index = pitch_outcome.find('(')
+                    if loc_index > 0:
+                        inplay_outcome = pitch_outcome[loc_index:]
                     if pitch_outcome == AtBatOutcome.BALL:
                         atbat.balls = atbat.balls + 1
                     elif pitch_outcome == AtBatOutcome.BB:
@@ -147,12 +179,14 @@ def process_inning(inning, pitcher, inning_num, awayteam, hometeam, game_date):
                     else:
                         i=1
                         print(pitch_outcome)
+            if len(inplay_outcome) > 0:
+                process_inplay_outcomes(inplay_outcome, atbat)
+            inplay_outcome = ''
             if pitch.startswith("Pinch") or pitch.startswith("Now at") or pitch.startswith("Now in"):
                 i = 1
             else :
                 batters.append(atbat)
     return batters
-
 
 
 # each file needs the <br> tags between pitch outcomes replaced with something
@@ -183,15 +217,17 @@ for root, dirs, files in os.walk('example_logs', topdown=False):
                 th_link_pitcher = inning.find_all("th")[1].find("a")
                 if (th_link_pitcher):
                     pitcher = th_link_pitcher.text
-                results.append(process_inning(inning, pitcher, inning_num, away, home, game_date))
+                    pitcher_id = get_player_id_from_href(th_link_pitcher)
+                results.append(process_inning(inning, pitcher, pitcher_id, inning_num, away, home, game_date))
 
 output_file = open('logresults.csv', 'w')
 
-output_file.write("Batter,Batter Team,Pitcher,Pitcher Team,GameDate,Inning,BALLS,CS,SWS,FB,FPS,CSO,SWO,InP,HR,Result\n")
+output_file.write("BatterId,Batter,Batter Team,PitcherId,Pitcher,Pitcher Team,GameDate,Inning,BALLS,CS,SWS,FB,FPS,CSO,SWO,InP,HR,Result,HitType,HitLocation,ExitVelocity\n")
 for plateappearances in results:
     for pa in plateappearances:
 
-        output_file.write(pa.player+","+pa.player_team+","+pa.pitcher+","+pa.pitcher_team+","+pa.game_date+","+pa.inning+","+str(pa.balls)+","+str(pa.called_strikes)+","
+        output_file.write(pa.player_id+","+pa.player+","+pa.player_team+","+pa.pitcher_id+","+pa.pitcher+","+pa.pitcher_team+","+pa.game_date+","+pa.inning+","+str(pa.balls)+","+str(pa.called_strikes)+","
                +str(pa.swinging_strikes)+","+str(pa.foul_balls)+","
-               +str(pa.first_pitch_strike)+","+str(pa.called_strike_out)+","+str(pa.swinging_strike_out)+","+str(pa.ball_in_play)+","+str(pa.home_run)+","+pa.result+"\n")
+               +str(pa.first_pitch_strike)+","+str(pa.called_strike_out)+","+str(pa.swinging_strike_out)+","+str(pa.ball_in_play)+","+str(pa.home_run)+","+pa.result+","
+                          +pa.hittype+","+pa.hitlocation+","+pa.exitvelo+"\n")
 output_file.close()

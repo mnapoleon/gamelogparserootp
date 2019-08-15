@@ -17,10 +17,12 @@ class HitResult:
 class PlayerAtBat:
 
     def __init__(self):
+        self.player_id = 0
         self.player = ""
         self.player_team = ""
         self.inning = 0
         self.game_date = ""
+        self.pitcher_id = 0
         self.pitcher = ""
         self.pitcher_team = ""
         self.balls = 0
@@ -33,11 +35,15 @@ class PlayerAtBat:
         self.called_strike_out = 0
         self.swinging_strike_out = 0
         self.result = ""
+        self.hittype = ""
+        self.hitlocation = ""
+        self.exitvelo = ""
 
     def __str__(self):
-        return self.player + " - " + self.pitcher + " Inning : " + self.inning + \
+        return self.player + "(" + self.player_id + ")" + " - " + self.pitcher + "(" + self.pitcher_id + ")" + " Inning : " + self.inning + \
                 " - Balls: " + str(self.balls) + \
                 " Called Strikes: " + str(self.called_strikes) + " Swinging Stikes: " + str(self.swinging_strikes) + \
                 " First Pitch Strike: " + str(self.first_pitch_strike) + " Foul Balls: " + str(self.foul_balls) + \
                 " Ball In Play : " + str(self.ball_in_play) + "Home Run : " + str(self.home_run) + \
-                " Result: " + self.result
+                " Result: " + self.result + " Hit Type: " + self.hittype + " Hit Location: " + self.hitlocation + \
+                " Exit Velo: " + self.exitvelo
