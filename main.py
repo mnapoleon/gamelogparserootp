@@ -158,7 +158,7 @@ def process_inning(inning, pitcher, inning_num, awayteam, hometeam, game_date):
 # each file needs the <br> tags between pitch outcomes replaced with something
 # the BeautifulSoup won't strip away.
 results = []
-for root, dirs, files in os.walk('logs', topdown=False):
+for root, dirs, files in os.walk('example_logs', topdown=False):
     for name in files:
         if name.endswith(".html"):
             with fileinput.FileInput(os.path.join(root, name), inplace=True, backup='.bak') as file:
