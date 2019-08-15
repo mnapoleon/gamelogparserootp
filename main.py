@@ -27,7 +27,7 @@ def get_player_id_from_href(player_tag):
     player_id = player_href[underscore_index+1:dot_html_index]
     return player_id
 
-def process_inning(inning, pitcher, pitcher_id, inning_num, awayteam, hometeam, game_date):
+def process_inning(game_id,inning, pitcher, pitcher_id, inning_num, league, awayteam, hometeam, game_date):
     td_tags = inning.find_all("td", class_=lambda x: x != 'datathbg')
 
     # determine if we are in top or bottom of innning
@@ -52,7 +52,6 @@ def process_inning(inning, pitcher, pitcher_id, inning_num, awayteam, hometeam, 
             batter_tag = td_tag.find("a")
             batter = batter_tag.text
             batter_id = get_player_id_from_href(batter_tag)
-            print("Batter Id: " + batter_id)
         elif text_data == '':
             i = 1
         else:
@@ -64,6 +63,8 @@ def process_inning(inning, pitcher, pitcher_id, inning_num, awayteam, hometeam, 
             atbat.player = batter
             atbat.player_id = batter_id
             atbat.game_date = game_date
+            atbat.league = league
+            atbat.game_id = game_id
             if top:
                 atbat.player_team = awayteam
                 atbat.pitcher_team = hometeam
@@ -192,15 +193,19 @@ def process_inning(inning, pitcher, pitcher_id, inning_num, awayteam, hometeam, 
 # each file needs the <br> tags between pitch outcomes replaced with something
 # the BeautifulSoup won't strip away.
 results = []
-for root, dirs, files in os.walk('example_logs', topdown=False):
+for root, dirs, files in os.walk('C:\\Users\\mnapoleo\\Downloads\\almanac_2046\\game_logs', topdown=False):
     for name in files:
         if name.endswith(".html"):
+            print("FILE IN PROCESS: "+ name)
+            game_id = name[name.find('_')+1:name.find('.html')]
             with fileinput.FileInput(os.path.join(root, name), inplace=True, backup='.bak') as file:
                 for line in file:
                     print(line.replace("<br>", "*"), end='')
 
             soup = BeautifulSoup(open(os.path.join(root, name)), "html.parser")
 
+            # get the league
+            league = soup.find("div", class_="reptitle").text
             # get the teams from the game log
             teams = soup.find("div", class_="repsubtitle").text.split('@')
             away = Team.find_team_by_name(teams[0]).name
@@ -218,15 +223,19 @@ for root, dirs, files in os.walk('example_logs', topdown=False):
                 if (th_link_pitcher):
                     pitcher = th_link_pitcher.text
                     pitcher_id = get_player_id_from_href(th_link_pitcher)
-                results.append(process_inning(inning, pitcher, pitcher_id, inning_num, away, home, game_date))
+                try:
+                    results.append(process_inning(game_id,inning, pitcher, pitcher_id, inning_num, league, away, home, game_date))
+                except Exception:
+                    print("File " + name + " has issues")
+                    pass
 
 output_file = open('logresults.csv', 'w')
 
-output_file.write("BatterId,Batter,Batter Team,PitcherId,Pitcher,Pitcher Team,GameDate,Inning,BALLS,CS,SWS,FB,FPS,CSO,SWO,InP,HR,Result,HitType,HitLocation,ExitVelocity\n")
+output_file.write("GameId,League,BatterId,Batter,Batter Team,PitcherId,Pitcher,Pitcher Team,GameDate,Inning,BALLS,CS,SWS,FB,FPS,CSO,SWO,InP,HR,Result,HitType,HitLocation,ExitVelocity\n")
 for plateappearances in results:
     for pa in plateappearances:
 
-        output_file.write(pa.player_id+","+pa.player+","+pa.player_team+","+pa.pitcher_id+","+pa.pitcher+","+pa.pitcher_team+","+pa.game_date+","+pa.inning+","+str(pa.balls)+","+str(pa.called_strikes)+","
+        output_file.write(str(pa.game_id)+","+pa.league+","+pa.player_id+","+pa.player+","+pa.player_team+","+pa.pitcher_id+","+pa.pitcher+","+pa.pitcher_team+","+pa.game_date+","+pa.inning+","+str(pa.balls)+","+str(pa.called_strikes)+","
                +str(pa.swinging_strikes)+","+str(pa.foul_balls)+","
                +str(pa.first_pitch_strike)+","+str(pa.called_strike_out)+","+str(pa.swinging_strike_out)+","+str(pa.ball_in_play)+","+str(pa.home_run)+","+pa.result+","
                           +pa.hittype+","+pa.hitlocation+","+pa.exitvelo+"\n")
