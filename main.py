@@ -5,6 +5,7 @@ from classes.team import Team
 import re
 import os
 import fileinput
+import logging
 
 
 def process_inplay_outcomes(inplay_outcomes, atbat):
@@ -180,7 +181,7 @@ def process_inning(game_id,inning, pitcher, pitcher_id, inning_num, league, away
                         atbat.result = 'TP'
                     else:
                         i=1
-                        print(pitch_outcome)
+                        logging.warning("Unknown pitch outcome:: " + pitch_outcome);
             if len(inplay_outcome) > 0:
                 process_inplay_outcomes(inplay_outcome, atbat)
             inplay_outcome = ''
@@ -194,10 +195,11 @@ def process_inning(game_id,inning, pitcher, pitcher_id, inning_num, league, away
 # each file needs the <br> tags between pitch outcomes replaced with something
 # the BeautifulSoup won't strip away.
 results = []
-for root, dirs, files in os.walk('D:\\game_logs', topdown=False):
+logging.basicConfig(level=logging.DEBUG, filename='gamelogs.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
+for root, dirs, files in os.walk('C:\\dev\\ootp\\game_logs_working', topdown=False):
     for name in files:
         if name.endswith(".html"):
-            print("FILE IN PROCESS: " + name)
+            logging.info("File in process " + name)
             game_id = name[name.find('_')+1:name.find('.html')]
             with fileinput.FileInput(os.path.join(root, name), inplace=True, backup='.bak') as file:
                 for line in file:
@@ -209,8 +211,10 @@ for root, dirs, files in os.walk('D:\\game_logs', topdown=False):
             league = soup.find("div", class_="reptitle").text
             # get the teams from the game log
             teams = soup.find("div", class_="repsubtitle").text.split('@')
-            away = Team.find_team_by_name(teams[0]).name
-            home = Team.find_team_by_name(teams[1]).name
+            away_team = Team.find_team_by_name(teams[0])
+            home_team = Team.find_team_by_name(teams[1])
+            away = away_team.name if away_team else ""
+            home = home_team.name if home_team else ""
 
             # find the game date
             game_date = soup.find("div", class_="repsubtitle").find_next_sibling().text
@@ -226,13 +230,13 @@ for root, dirs, files in os.walk('D:\\game_logs', topdown=False):
                         pitcher = th_link_pitcher.text
                         pitcher_id = get_player_id_from_href(th_link_pitcher)
                 except Exception:
-                    print("Issue with Pitcher for File " + name)
+                    logging.error("Issue with Pitcher for File " + name)
                     continue
                 try:
                     results.append(process_inning(game_id, inning, pitcher, pitcher_id, inning_num,
                                                   league, away, home, game_date))
                 except Exception:
-                    print("File " + name + " has issues")
+                    logging.error("File " + name + " has issues")
                     pass
 
 output_file = open('logresults.csv', 'w')

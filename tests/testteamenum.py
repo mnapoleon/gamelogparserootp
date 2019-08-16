@@ -1,5 +1,5 @@
 import unittest
-from classes.team import Team
+from classes.team_guba import Team
 
 
 class TestTeamEnum(unittest.TestCase):
@@ -74,9 +74,9 @@ class TestTeamEnum(unittest.TestCase):
         self.assertEqual(Team.CHC, Team.find_team_by_abbr("AAA"))
 
     def test_find_team_by_name(self):
-        self.assertEqual(Team.CHC.value, Team.find_team_by_name('christchurch crusaders'))
-        self.assertEqual(Team.CC.value, Team.find_team_by_name('CAPE COD HOOKS'))
-        self.assertEqual(Team.LA.value, Team.find_team_by_name('Los Angeles Express'))
+        self.assertEqual(Team.CHC, Team.find_team_by_name('christchurch crusaders'))
+        self.assertEqual(Team.CC, Team.find_team_by_name('CAPE COD HOOKS'))
+        self.assertEqual(Team.LA, Team.find_team_by_name('Los Angeles Express'))
 
 if __name__ == '__main__':
     unittest.main()
