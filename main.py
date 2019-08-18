@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 from classes.playeratbat import PlayerAtBat
 from classes.atbatoutcome import AtBatOutcome
 from classes.team import Team
+import sys
 import re
 import os
 import fileinput
@@ -111,6 +112,10 @@ def process_inning(game_id,inning, pitcher, pitcher_id, inning_num, league, away
                         atbat.swinging_strikes = atbat.swinging_strikes + 1
                         atbat.swinging_strike_out = 1
                         atbat.result = 'SO'
+                    elif pitch_outcome == AtBatOutcome.BUNTMISSED_SO:
+                        atbat.swinging_strikes = atbat.swinging_strikes + 1
+                        atbat.swinging_strike_out = 1
+                        atbat.result = 'SO'
                     elif pitch_outcome.startswith(AtBatOutcome.FB):
                         atbat.foul_balls = atbat.foul_balls + 1
                         if pitch_count == '0-0':
@@ -140,6 +145,9 @@ def process_inning(game_id,inning, pitcher, pitcher_id, inning_num, league, away
                     elif pitch_outcome.startswith(AtBatOutcome.GODP):
                         atbat.ball_in_play = 1
                         atbat.result = 'GO-DP'
+                    elif pitch_outcome.startswith(AtBatOutcome.GOTP):
+                        atbat.ball_in_play = 1
+                        atbat.result = 'GO-TP'
                     elif pitch_outcome.startswith(AtBatOutcome.ROE):
                         atbat.ball_in_play = 1
                         atbat.result = 'ROE'
@@ -167,6 +175,18 @@ def process_inning(game_id,inning, pitcher, pitcher_id, inning_num, league, away
                             atbat.result = 'SAC'
                         else:
                             atbat.result = '1B'
+                    elif pitch_outcome.startswith(AtBatOutcome.SQZBUNT):
+                        atbat.ball_in_play = 1
+                        if pitch_outcome.__contains__(AtBatOutcome.SQZ_HOME_RUNNER_OUT) and pitch_outcome.__contains__(AtBatOutcome.SQZ_BATTER_SAFE):
+                            atbat.result = 'GO'
+                        elif pitch_outcome.__contains__(AtBatOutcome.SQZ_HOME_RUNNER_SAFE) and pitch_outcome.__contains__(AtBatOutcome.SQZ_BATTER_SAFE):
+                            atbat.result = '1B'
+                        elif pitch_outcome.__contains__(AtBatOutcome.SQZ_FIRST_OUT):
+                            atbat.result = 'SAC'
+                        elif pitch_outcome.__contains__(AtBatOutcome.SQZ_FIRST_SAFE):
+                            atbat.result = '1B'
+                        else:
+                            logging.warning("Unexpected Squeeze Play Outcome")
                     elif pitch_outcome.startswith(AtBatOutcome.BUNTFORHIT):
                         atbat.ball_in_play = 1
                         if pitch_outcome.__contains__(AtBatOutcome.OUT):
@@ -194,9 +214,10 @@ def process_inning(game_id,inning, pitcher, pitcher_id, inning_num, league, away
 
 # each file needs the <br> tags between pitch outcomes replaced with something
 # the BeautifulSoup won't strip away.
+game_log_dir = sys.argv[1]
 results = []
 logging.basicConfig(level=logging.DEBUG, filename='gamelogs.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
-for root, dirs, files in os.walk('C:\\dev\\ootp\\game_logs_working', topdown=False):
+for root, dirs, files in os.walk(game_log_dir, topdown=False):
     for name in files:
         if name.endswith(".html"):
             logging.info("File in process " + name)
@@ -245,10 +266,10 @@ output_file.write("GameId,League,BatterId,Batter,Batter Team,PitcherId,Pitcher,P
 for plateappearances in results:
     for pa in plateappearances:
 
-        output_file.write(str(pa.game_id)+","+pa.league+","+pa.player_id+","+pa.player+","+pa.player_team+","
-                          + pa.pitcher_id+","+pa.pitcher+","+pa.pitcher_team+","+pa.game_date+","+pa.inning+","
+        output_file.write(str(pa.game_id)+","+pa.league+","+str(pa.player_id)+","+pa.player+","+pa.player_team+","
+                          + str(pa.pitcher_id)+","+pa.pitcher+","+pa.pitcher_team+","+pa.game_date+","+pa.inning+","
                           + str(pa.balls)+","+str(pa.called_strikes)+","+str(pa.swinging_strikes)+","+str(pa.foul_balls)
                           + ","+str(pa.first_pitch_strike)+","+str(pa.called_strike_out)+","+str(pa.swinging_strike_out)
                           + ","+str(pa.ball_in_play)+","+str(pa.home_run)+","+pa.result+","
-                          + pa.hittype+","+pa.hitlocation+","+pa.exitvelo+"\n")
+                          + pa.hittype+","+pa.hitlocation+","+str(pa.exitvelo)+"\n")
 output_file.close()
