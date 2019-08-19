@@ -9,6 +9,14 @@ import fileinput
 import logging
 
 
+class MalformedPitchOutcomeException(Exception):
+    """Pitch outcome html is malformed"""
+    pass
+
+class MalformedBatterException(Exception):
+    """Batter html is malformed"""
+    pass
+
 def process_inplay_outcomes(inplay_outcomes, atbat):
     outcomes = inplay_outcomes.split(',')
     hit_type_raw = outcomes[0]
@@ -52,9 +60,15 @@ def process_inning(game_id,inning, pitcher, pitcher_id, inning_num, league, away
             pitcher = pitcher_tag.text
             pitcher_id = get_player_id_from_href(pitcher_tag)
         elif text_data.startswith('Batting') or text_data.startswith('Pinch Hitting'):
-            batter_tag = td_tag.find("a")
-            batter = batter_tag.text
-            batter_id = get_player_id_from_href(batter_tag)
+            try:
+                batter_tag = td_tag.find("a")
+                if batter_tag:
+                    batter = batter_tag.text
+                    batter_id = get_player_id_from_href(batter_tag)
+            except Exception as inst:
+                logging.error("Batter text is malformed")
+                logging.error("Batter tag: " + batter_tag)
+                raise MalformedBatterException
         elif text_data == '':
             i = 1
         else:
@@ -202,6 +216,8 @@ def process_inning(game_id,inning, pitcher, pitcher_id, inning_num, league, away
                     else:
                         i=1
                         logging.warning("Unknown pitch outcome:: " + pitch_outcome);
+                        logging.warning("Malformed Pitch Outcome")
+                        raise MalformedPitchOutcomeException
             if len(inplay_outcome) > 0:
                 process_inplay_outcomes(inplay_outcome, atbat)
             inplay_outcome = ''
@@ -220,7 +236,7 @@ logging.basicConfig(level=logging.DEBUG, filename='gamelogs.log', filemode='w', 
 for root, dirs, files in os.walk(game_log_dir, topdown=False):
     for name in files:
         if name.endswith(".html"):
-            logging.info("File in process " + name)
+            #logging.info("File in process " + name)
             game_id = name[name.find('_')+1:name.find('.html')]
             with fileinput.FileInput(os.path.join(root, name), inplace=True, backup='.bak') as file:
                 for line in file:
@@ -250,14 +266,22 @@ for root, dirs, files in os.walk(game_log_dir, topdown=False):
                     if th_link_pitcher:
                         pitcher = th_link_pitcher.text
                         pitcher_id = get_player_id_from_href(th_link_pitcher)
-                except Exception:
-                    logging.error("Issue with Pitcher for File " + name)
+                except Exception as inst:
+                    logging.error("Issue with Pitcher th tags for File " + name)
+                    logging.error(type(inst))
                     continue
                 try:
                     results.append(process_inning(game_id, inning, pitcher, pitcher_id, inning_num,
                                                   league, away, home, game_date))
-                except Exception:
-                    logging.error("File " + name + " has issues")
+                except MalformedBatterException:
+                    logging.error("There are malformed batter tags in file " + name)
+                    pass
+                except MalformedPitchOutcomeException:
+                    logging.error("There are malformed pitch outcomes in file " + name)
+                    pass
+                except Exception as inst:
+                    logging.error("File " + name + " has issues.  Haven't yet determine the exact issue.")
+                    logging.error(type(inst))
                     pass
 
 output_file = open('logresults.csv', 'w')
