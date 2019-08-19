@@ -7,15 +7,21 @@ import re
 import os
 import fileinput
 import logging
+import structlog
+
+from structlog import get_logger
+from structlog import PrintLoggerFactory
 
 
 class MalformedPitchOutcomeException(Exception):
     """Pitch outcome html is malformed"""
     pass
 
+
 class MalformedBatterException(Exception):
     """Batter html is malformed"""
     pass
+
 
 def process_inplay_outcomes(inplay_outcomes, atbat):
     outcomes = inplay_outcomes.split(',')
@@ -68,6 +74,8 @@ def process_inning(game_id,inning, pitcher, pitcher_id, inning_num, league, away
             except Exception as inst:
                 logging.error("Batter text is malformed")
                 logging.error("Batter tag: " + batter_tag)
+                log.bind(exception="MalformedBatterException")
+                log.bind(batter_tag=batter_tag)
                 raise MalformedBatterException
         elif text_data == '':
             i = 1
@@ -217,6 +225,8 @@ def process_inning(game_id,inning, pitcher, pitcher_id, inning_num, league, away
                         i=1
                         logging.warning("Unknown pitch outcome:: " + pitch_outcome);
                         logging.warning("Malformed Pitch Outcome")
+                        log.bind(outcome=pitch_outcome)
+                        log.bind(exception="MalformedPitchOutcome")
                         raise MalformedPitchOutcomeException
             if len(inplay_outcome) > 0:
                 process_inplay_outcomes(inplay_outcome, atbat)
@@ -232,9 +242,12 @@ def process_inning(game_id,inning, pitcher, pitcher_id, inning_num, league, away
 # the BeautifulSoup won't strip away.
 game_log_dir = sys.argv[1]
 results = []
+structlog.configure(processors=[structlog.processors.JSONRenderer()], logger_factory=PrintLoggerFactory, )
+logger = structlog.get_logger()
 logging.basicConfig(level=logging.DEBUG, filename='gamelogs.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
 for root, dirs, files in os.walk(game_log_dir, topdown=False):
     for name in files:
+        log = logger.bind(file_name=name)
         if name.endswith(".html"):
             #logging.info("File in process " + name)
             game_id = name[name.find('_')+1:name.find('.html')]
@@ -268,20 +281,25 @@ for root, dirs, files in os.walk(game_log_dir, topdown=False):
                         pitcher_id = get_player_id_from_href(th_link_pitcher)
                 except Exception as inst:
                     logging.error("Issue with Pitcher th tags for File " + name)
+                    log.bind(pitcher_tag=th_link_pitcher)
+                    log.msg("Issue with Pitcher th tags")
                     logging.error(type(inst))
                     continue
                 try:
                     results.append(process_inning(game_id, inning, pitcher, pitcher_id, inning_num,
                                                   league, away, home, game_date))
                 except MalformedBatterException:
+                    log.msg("There are malformed batter tags")
                     logging.error("There are malformed batter tags in file " + name)
                     pass
                 except MalformedPitchOutcomeException:
+                    log.msg("There are malformed pitch outcomes")
                     logging.error("There are malformed pitch outcomes in file " + name)
                     pass
                 except Exception as inst:
                     logging.error("File " + name + " has issues.  Haven't yet determine the exact issue.")
                     logging.error(type(inst))
+                    log.msg("Haven't yet determine the exact issue.")
                     pass
 
 output_file = open('logresults.csv', 'w')
