@@ -5,21 +5,16 @@ class Team(Enum):
 
     BEI = 'Beijing Bison'
     BOG = 'Bogota Toros'
-    BA = 'Buenos Aires Albicelestes'
+    BDX = 'Bordeaux Vignerons'
     CC = 'Cape Cod Hooks'
     CHC = 'Christchurch Crusaders'
     CIN = 'Cincinnati Showboats'
-    DEN = 'Denver Bears'
     DUB = 'Dublin Shamrocks'
-    ELP = 'El Paso Prospectors'
     GRE = 'Greenville Moonshiners'
     HON = 'Honolulu Island Kings'
     HOU = 'Houston Orbits'
-    JAK = 'Jakarta Tidal Wave'
     KC = 'Kansas City Monarchs'
-    KRA = 'Krakow Dragons'
     LON = 'London Spitfires'
-    LA = 'Los Angeles Express'
     MOS = 'Moscow Enforcers'
     NSH = 'Nashville Sounds'
     PHI = 'Philadelphia Brewers'
@@ -31,6 +26,12 @@ class Team(Enum):
     SEO = 'Seoul Crushers'
     SYD = 'Sydney Marauders'
     TOR = 'Toronto Beavers'
+
+    SHA = 'Shanghai Snakes'
+    GUA = 'Guangzhou Tigers'
+    ZHE = 'Zhengzhou Elephants'
+    MAN = 'Manchuria Moon Bears'
+    TIB = 'Tibet Wolves'
 
     @staticmethod
     def find_team_by_abbr(abbr):

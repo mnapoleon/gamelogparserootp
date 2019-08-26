@@ -40,6 +40,7 @@ class PlayerAtBat:
         self.hittype = ""
         self.hitlocation = ""
         self.exitvelo = ""
+        self.distance = ""
 
     def __str__(self):
         return "GameId: "+self.game_id + ":" + self.player + "(" + self.player_id + ")" + " - " + self.pitcher + "(" + self.pitcher_id + ")" + " Inning : " + self.inning + \
