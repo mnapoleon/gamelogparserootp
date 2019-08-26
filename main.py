@@ -23,11 +23,28 @@ def process_inplay_outcomes(inplay_outcomes, atbat):
     outcomes = inplay_outcomes.split(',')
     hit_type_raw = outcomes[0]
     hit_type = hit_type_raw[1:]
-    location = outcomes[1].strip()
-    exit_velo_strings = outcomes[2].split()
-    exit_velo = exit_velo_strings[1]
+
+    location = outcomes[1][:outcomes[1].index(')')].strip()
+
+    contains_distance = inplay_outcomes.__contains__('distance')
+    contains_ev = inplay_outcomes.__contains__('ev')
+    exit_velo = ''
+    distance = ''
+
+    if contains_ev and contains_distance:
+        exitvelo_strings = outcomes[2].split()
+        exit_velo = exitvelo_strings[1]
+        distance_strings = outcomes[3].split()
+        distance = distance_strings[1]
+    elif contains_ev and not contains_distance:
+        exitvelo_strings = outcomes[2].split()
+        exit_velo = exitvelo_strings[1]
+    elif contains_distance and not contains_ev:
+        distance_strings = outcomes[2].split()
+        distance = distance_strings[2]
 
     atbat.exitvelo = exit_velo
+    atbat.distance = distance
     atbat.hittype = hit_type
     atbat.hitlocation = location
 
@@ -92,7 +109,7 @@ def process_inning(game_id,inning, pitcher, pitcher_id, inning_num, league, away
                 atbat.pitcher_team = awayteam
             for pitch in at_bat_data:
                 if re.match(r'^([0-3]-[0-2]:)', pitch):
-                    pitch_data = re.split(":", pitch)
+                    pitch_data = re.split(":", pitch, 1)
                     pitch_count = pitch_data[0]
                     pitch_outcome = pitch_data[1].strip().lower()
                     loc_index = pitch_outcome.find('(')
@@ -295,9 +312,10 @@ for root, dirs, files in os.walk(game_log_dir, topdown=False):
                     log.msg("Haven't yet determine the exact issue.")
                     pass
 
-output_file = open('logresults.csv', 'w')
+#output_file = open('logresults.csv', 'w')
+output_file = open(sys.argv[2], 'w')
 
-output_file.write("GameId,League,BatterId,Batter,Batter Team,PitcherId,Pitcher,Pitcher Team,GameDate,Inning,BALLS,CS,SWS,FB,FPS,CSO,SWO,InP,HR,Result,HitType,HitLocation,ExitVelocity\n")
+output_file.write("GameId,League,BatterId,Batter,Batter Team,PitcherId,Pitcher,Pitcher Team,GameDate,Inning,BALLS,CS,SWS,FB,FPS,CSO,SWO,InP,HR,Result,HitType,HitLocation,Distance,ExitVelocity\n")
 for plateappearances in results:
     for pa in plateappearances:
 
@@ -306,5 +324,5 @@ for plateappearances in results:
                           + str(pa.balls)+","+str(pa.called_strikes)+","+str(pa.swinging_strikes)+","+str(pa.foul_balls)
                           + ","+str(pa.first_pitch_strike)+","+str(pa.called_strike_out)+","+str(pa.swinging_strike_out)
                           + ","+str(pa.ball_in_play)+","+str(pa.home_run)+","+pa.result+","
-                          + pa.hittype+","+pa.hitlocation+","+str(pa.exitvelo)+"\n")
+                          + pa.hittype+","+pa.hitlocation+","+str(pa.distance)+","+str(pa.exitvelo)+"\n")
 output_file.close()
