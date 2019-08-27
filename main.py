@@ -24,24 +24,27 @@ def process_inplay_outcomes(inplay_outcomes, atbat):
     hit_type_raw = outcomes[0]
     hit_type = hit_type_raw[1:]
 
-    location = outcomes[1][:outcomes[1].index(')')].strip()
-
     contains_distance = inplay_outcomes.__contains__('distance')
     contains_ev = inplay_outcomes.__contains__('ev')
     exit_velo = ''
     distance = ''
 
+    if contains_ev or contains_distance:
+        location = outcomes[1].strip()
+    else:
+        location = outcomes[1][:outcomes[1].index(')')].strip()
+
     if contains_ev and contains_distance:
         exitvelo_strings = outcomes[2].split()
         exit_velo = exitvelo_strings[1]
         distance_strings = outcomes[3].split()
-        distance = distance_strings[1]
+        distance = distance_strings[2].strip()
     elif contains_ev and not contains_distance:
         exitvelo_strings = outcomes[2].split()
-        exit_velo = exitvelo_strings[1]
+        exit_velo = exitvelo_strings[1].strip()
     elif contains_distance and not contains_ev:
         distance_strings = outcomes[2].split()
-        distance = distance_strings[2]
+        distance = distance_strings[2].strip()
 
     atbat.exitvelo = exit_velo
     atbat.distance = distance
