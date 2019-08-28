@@ -132,6 +132,7 @@ def process_inning(game_id,inning, pitcher, pitcher_id, inning_num, league, away
                         atbat.called_strikes = atbat.called_strikes + 1
                         if pitch_count == '0-0':
                             atbat.first_pitch_strike = 1
+                            atbat.first_pitch_called_strike = 1
                     elif pitch_outcome.startswith(AtBatOutcome.CSO):
                         atbat.called_strikes = atbat.called_strikes + 1
                         atbat.called_strike_out = 1
@@ -140,10 +141,12 @@ def process_inning(game_id,inning, pitcher, pitcher_id, inning_num, league, away
                         atbat.swinging_strikes = atbat.swinging_strikes + 1
                         if pitch_count == '0-0':
                             atbat.first_pitch_strike = 1
+                            atbat.first_pitcher_swinging_strike = 1
                     elif pitch_outcome == AtBatOutcome.BUNTMISSED:
                         atbat.swinging_strikes = atbat.swinging_strikes + 1
                         if pitch_count == '0-0':
                             atbat.first_pitch_strike = 1
+                            atbat.first_pitcher_swinging_strike = 1
                     elif pitch_outcome.startswith(AtBatOutcome.SWSO):
                         atbat.swinging_strikes = atbat.swinging_strikes + 1
                         atbat.swinging_strike_out = 1
@@ -156,10 +159,12 @@ def process_inning(game_id,inning, pitcher, pitcher_id, inning_num, league, away
                         atbat.foul_balls = atbat.foul_balls + 1
                         if pitch_count == '0-0':
                             atbat.first_pitch_strike = 1
+                            atbat.first_pitcher_swinging_strike = 1
                     elif pitch_outcome.startswith(AtBatOutcome.BFB):
                         atbat.foul_balls = atbat.foul_balls + 1
                         if pitch_count == '0-0':
                             atbat.first_pitch_strike = 1
+                            atbat.first_pitcher_swinging_strike = 1
                     elif pitch_outcome.startswith(AtBatOutcome.FO):
                         atbat.ball_in_play = 1
                         if pitch_outcome.__contains__(AtBatOutcome.PO):
@@ -318,14 +323,15 @@ for root, dirs, files in os.walk(game_log_dir, topdown=False):
 #output_file = open('logresults.csv', 'w')
 output_file = open(sys.argv[2], 'w')
 
-output_file.write("GameId,League,BatterId,Batter,Batter Team,PitcherId,Pitcher,Pitcher Team,GameDate,Inning,BALLS,CS,SWS,FB,FPS,CSO,SWO,InP,HR,Result,HitType,HitLocation,Distance,ExitVelocity\n")
+output_file.write("GameId,League,BatterId,Batter,Batter Team,PitcherId,Pitcher,Pitcher Team,GameDate,Inning,BALLS,CS,SWS,FB,FPS,FPCS,FPSS,CSO,SWO,InP,HR,Result,HitType,HitLocation,Distance,ExitVelocity\n")
 for plateappearances in results:
     for pa in plateappearances:
 
         output_file.write(str(pa.game_id)+","+pa.league+","+str(pa.player_id)+","+pa.player+","+pa.player_team+","
                           + str(pa.pitcher_id)+","+pa.pitcher+","+pa.pitcher_team+","+pa.game_date+","+pa.inning+","
                           + str(pa.balls)+","+str(pa.called_strikes)+","+str(pa.swinging_strikes)+","+str(pa.foul_balls)
-                          + ","+str(pa.first_pitch_strike)+","+str(pa.called_strike_out)+","+str(pa.swinging_strike_out)
-                          + ","+str(pa.ball_in_play)+","+str(pa.home_run)+","+pa.result+","
-                          + pa.hittype+","+pa.hitlocation+","+str(pa.distance)+","+str(pa.exitvelo)+"\n")
+                          + ","+str(pa.first_pitch_strike)+","+str(pa.first_pitch_called_strike)+","
+                          + str(pa.first_pitcher_swinging_strike)+","+str(pa.called_strike_out)+","
+                          + str(pa.swinging_strike_out) + ","+str(pa.ball_in_play)+","+str(pa.home_run)+","+pa.result
+                          + ","+ pa.hittype+","+pa.hitlocation+","+str(pa.distance)+","+str(pa.exitvelo)+"\n")
 output_file.close()
