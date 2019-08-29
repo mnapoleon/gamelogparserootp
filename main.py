@@ -244,6 +244,9 @@ def process_inning(game_id,inning, pitcher, pitcher_id, inning_num, league, away
                         log = log.bind(outcome=pitch_outcome)
                         log = log.bind(exception="MalformedPitchOutcome")
                         raise MalformedPitchOutcomeException
+
+                    if pitch_count == '0-0' and atbat.ball_in_play == 1:
+                        atbat.first_pitch_swinging_other = 1
             if len(inplay_outcome) > 0:
                 process_inplay_outcomes(inplay_outcome, atbat)
             inplay_outcome = ''
@@ -327,11 +330,13 @@ output_file.write("GameId,League,BatterId,Batter,Batter Team,PitcherId,Pitcher,P
 for plateappearances in results:
     for pa in plateappearances:
 
-        output_file.write(str(pa.game_id)+","+pa.league+","+str(pa.player_id)+","+pa.player+","+pa.player_team+","
-                          + str(pa.pitcher_id)+","+pa.pitcher+","+pa.pitcher_team+","+pa.game_date+","+pa.inning+","
-                          + str(pa.balls)+","+str(pa.called_strikes)+","+str(pa.swinging_strikes)+","+str(pa.foul_balls)
-                          + ","+str(pa.first_pitch_strike)+","+str(pa.first_pitch_called_strike)+","
-                          + str(pa.first_pitcher_swinging_strike)+","+str(pa.called_strike_out)+","
-                          + str(pa.swinging_strike_out) + ","+str(pa.ball_in_play)+","+str(pa.home_run)+","+pa.result
-                          + ","+ pa.hittype+","+pa.hitlocation+","+str(pa.distance)+","+str(pa.exitvelo)+"\n")
+        output_file.write(str(pa.game_id) + "," + pa.league + "," + str(pa.player_id) + "," + pa.player + ","
+                          + pa.player_team+"," + str(pa.pitcher_id) + "," + pa.pitcher + "," + pa.pitcher_team
+                          + "," + pa.game_date + "," + pa.inning + "," + str(pa.balls) + "," + str(pa.called_strikes)
+                          + "," + str(pa.swinging_strikes) + "," + str(pa.foul_balls) + "," + str(pa.first_pitch_strike)
+                          + "," + str(pa.first_pitch_called_strike) + "," + str(pa.first_pitch_swinging_strike)
+                          + "," + str(pa.first_pitch_swinging_other) + "," + str(pa.called_strike_out)+","
+                          + str(pa.swinging_strike_out) + "," + str(pa.ball_in_play) + "," + str(pa.home_run) + ","
+                          + pa.result + "," + pa.hittype + "," + pa.hitlocation + ","
+                          + str(pa.distance) + "," + str(pa.exitvelo)+"\n")
 output_file.close()

@@ -34,6 +34,9 @@ class PlayerAtBat:
         self.ball_in_play = 0
         self.home_run = 0
         self.first_pitch_strike = 0
+        self.first_pitch_called_strike = 0
+        self.first_pitch_swinging_strike = 0
+        self.first_pitch_swinging_other = 0
         self.called_strike_out = 0
         self.swinging_strike_out = 0
         self.result = ""
