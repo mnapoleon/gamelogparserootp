@@ -1,0 +1,2 @@
+beautifulsoup4==4.8.0
+structlog==19.1.0
