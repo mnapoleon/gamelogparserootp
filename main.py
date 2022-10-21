@@ -1,3 +1,5 @@
+import logging
+
 from bs4 import BeautifulSoup
 from classes.playeratbat import PlayerAtBat
 from classes.atbatoutcome import AtBatOutcome
@@ -6,8 +8,14 @@ import sys
 import re
 import os
 import fileinput
-import structlog
+from pythonjsonlogger import jsonlogger
 
+logger = logging.getLogger(__name__)
+logHandler = logging.FileHandler('warn.log')
+logHandler.setLevel(logging.INFO)
+formatter = jsonlogger.JsonFormatter()
+logHandler.setFormatter(formatter)
+logger.addHandler(logHandler)
 
 class MalformedPitchOutcomeException(Exception):
     """Pitch outcome html is malformed"""
@@ -88,8 +96,9 @@ def process_inning(game_id,inning, pitcher, pitcher_id, inning_num, league, away
                     batter = batter_tag.text
                     batter_id = get_player_id_from_href(batter_tag)
             except Exception:
-                log = log.bind(exception="MalformedBatterException")
-                log = log.bind(batter_tag=batter_tag)
+                print(f"issue with batter tag :: ${batter_tag}")
+                #log = log.bind(exception="MalformedBatterException")
+                #log = log.bind(batter_tag=batter_tag)
                 raise MalformedBatterException
         elif text_data == '':
             i = 1
@@ -241,8 +250,8 @@ def process_inning(game_id,inning, pitcher, pitcher_id, inning_num, league, away
                         atbat.ball_in_play = 1
                         atbat.result = 'TP'
                     else:
-                        log = log.bind(outcome=pitch_outcome)
-                        log = log.bind(exception="MalformedPitchOutcome")
+                        #log = log.bind(outcome=pitch_outcome)
+                        #log = log.bind(exception="MalformedPitchOutcome")
                         raise MalformedPitchOutcomeException
 
                     if pitch_count == '0-0' and atbat.ball_in_play == 1:
@@ -261,21 +270,10 @@ def process_inning(game_id,inning, pitcher, pitcher_id, inning_num, league, away
 # the BeautifulSoup won't strip away.
 game_log_dir = sys.argv[1]
 results = []
-#log = wrap_logger(processors=[structlog.stdlib.filter_by_level,
-#                                                           structlog.stdlib.add_logger_name,
-#                                                           structlog.stdlib.add_log_level,
-#                                                           structlog.stdlib.PositionalArgumentsFormatter(),
-#                                                           structlog.processors.StackInfoRenderer(),
-#                                                           structlog.processors.format_exc_info,
-#                                                           structlog.processors.UnicodeDecoder(),
-#                                                           structlog.stdlib.render_to_log_kwargs,
-#                                                           JSONRenderer(indent=1, sort_keys=True)])
 
-structlog.configure(processors=[structlog.processors.JSONRenderer()])
-logger = structlog.get_logger()
 for root, dirs, files in os.walk(game_log_dir, topdown=False):
     for name in files:
-        log = logger.bind(file_name=name)
+        logger.info(f"Processing file {name}")
         if name.endswith(".html"):
             game_id = name[name.find('_')+1:name.find('.html')]
             with fileinput.FileInput(os.path.join(root, name), inplace=True, backup='.bak') as file:
@@ -307,7 +305,7 @@ for root, dirs, files in os.walk(game_log_dir, topdown=False):
                         pitcher = th_link_pitcher.text
                         pitcher_id = get_player_id_from_href(th_link_pitcher)
                 except Exception:
-                    log = log.bind(pitcher_tag=th_link_pitcher)
+                    #log = log.bind(pitcher_tag=th_link_pitcher)
                     log.msg("Issue with Pitcher th tags")
                     continue
                 try:
@@ -323,10 +321,10 @@ for root, dirs, files in os.walk(game_log_dir, topdown=False):
                     log.msg("Haven't yet determine the exact issue.")
                     pass
 
-#output_file = open('logresults.csv', 'w')
-output_file = open(sys.argv[2], 'w')
+output_file = open('logresults.csv', 'w')
+#output_file = open(sys.argv[2], 'w')
 
-output_file.write("GameId,League,BatterId,Batter,Batter Team,PitcherId,Pitcher,Pitcher Team,GameDate,Inning,BALLS,CS,SWS,FB,FPS,FPCS,FPSS,CSO,SWO,InP,HR,Result,HitType,HitLocation,Distance,ExitVelocity\n")
+output_file.write("GameId,League,BatterId,Batter,Batter Team,PitcherId,Pitcher,Pitcher Team,GameDate,Inning,BALLS,CS,SWS,FB,FPS,FPCS,FPSS,FPSO,CSO,SWO,InP,HR,Result,HitType,HitLocation,Distance,ExitVelocity\n")
 for plateappearances in results:
     for pa in plateappearances:
 

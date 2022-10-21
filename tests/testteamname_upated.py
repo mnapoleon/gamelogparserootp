@@ -1,5 +1,5 @@
 import unittest
-from classes.team import Team
+from classes.team_old import Team
 
 
 class TestTeamEnum(unittest.TestCase):
