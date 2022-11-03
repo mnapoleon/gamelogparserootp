@@ -1,1 +1,6 @@
 /example_logs/
+/test_files/
+/game_logs/
+.idea
+*.log
+logresults.csv
