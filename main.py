@@ -25,12 +25,21 @@ class MalformedPitchOutcomeException(Exception):
     pass
 
 
+class MalformedPitcherTagException(Exception):
+    """Something wrong with pitcher tag"""
+    pass
+
+
 class MalformedBatterException(Exception):
     """Batter html is malformed"""
     pass
 
+class GeneralGameLogException(Exception):
+    """Catch all for unknown exception when parsing game log"""
+    pass
 
-def process_inplay_outcomes(inplay_outcomes, atbat):
+
+def process_inplay_outcomes(inplay_outcomes):
     outcomes = inplay_outcomes.split(',')
     hit_type_raw = outcomes[0]
     hit_type = hit_type_raw[1:]
@@ -53,10 +62,12 @@ def process_inplay_outcomes(inplay_outcomes, atbat):
         case _:
             location = outcomes[1][:outcomes[1].index(')')].strip()
 
-    atbat.exitvelo = exit_velo
-    atbat.distance = distance
-    atbat.hittype = hit_type
-    atbat.hitlocation = location
+    #atbat.exitvelo = exit_velo
+    #atbat.distance = distance
+    #atbat.hittype = hit_type
+    #atbat.hitlocation = location
+    result = (exit_velo, distance, hit_type, location)
+    return result
 
 
 def get_player_id_from_href(player_tag):
@@ -256,7 +267,8 @@ def process_inning(game_id, inning, pitcher, pitcher_id, inning_num, league, awa
                     if pitch_count == '0-0' and at_bat.ball_in_play == 1:
                         at_bat.first_pitch_swinging_other = 1
             if len(inplay_outcome) > 0:
-                process_inplay_outcomes(inplay_outcome, at_bat)
+                at_bat.exitvelo, at_bat.distance, at_bat.hittype, at_bat.hitlocation = \
+                    process_inplay_outcomes(inplay_outcome)
             inplay_outcome = ''
             if pitch.startswith("Pinch") or pitch.startswith("Now at") or pitch.startswith("Now in"):
                 pass
@@ -276,19 +288,19 @@ def process_innings(innings, league, away, home, game_date):
             if th_link_pitcher:
                 pitcher = th_link_pitcher.text
                 pitcher_id = get_player_id_from_href(th_link_pitcher)
-        except Exception:
+        except MalformedPitcherTagException:
             logger.error("Issue with Pitcher th tags")
             continue
         try:
             innings_results.append(
-                process_inning(game_id, inning, pitcher, pitcher_id, inning_num,league, away, home, game_date))
+                process_inning(game_id, inning, pitcher, pitcher_id, inning_num, league, away, home, game_date))
         except MalformedBatterException:
             logger.error("There are malformed batter tags")
             pass
         except MalformedPitchOutcomeException:
             logger.error("There are malformed pitch outcomes")
             pass
-        except Exception:
+        except GeneralGameLogException:
             logger.error("Haven't yet determine the exact issue.")
             pass
     return innings_results
@@ -319,7 +331,7 @@ for root, dirs, files in os.walk(game_log_dir, topdown=False):
         logger.info(f"Processing file {name}")
         if name.endswith(".html"):
             game_id = name[name.find('_') + 1:name.find('.html')]
-            with fileinput.FileInput(os.path.join(root, name), inplace=True, backup='.bak') as file:
+            with fileinput.FileInput(os.path.join(root, name), inplace=True) as file:
                 for line in file:
                     print(line.replace("<br>", "*"), end='')
 
